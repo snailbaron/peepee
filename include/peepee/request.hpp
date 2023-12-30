@@ -1,5 +1,6 @@
 #pragma once
 
+#include <peepee/headers.hpp>
 #include <peepee/response.hpp>
 
 #include <curl/curl.h>
@@ -37,9 +38,9 @@ struct RequestOptions {
     std::vector<std::pair<std::string, std::string>> params;
     std::span<std::byte> data;
     std::map<std::string, std::string> headers;
-    std::vector<std::pair<std::string, std::string>> cookies;
-    std::vector<File> files;
-    float timeoutSeconds = 0.f;
+    //std::vector<std::pair<std::string, std::string>> cookies;
+    //std::vector<File> files;
+    //float timeoutSeconds = 0.f;
     bool allowRedirects = true;
 };
 
@@ -60,6 +61,7 @@ private:
     static size_t writeHeaders(void* buffer, size_t, size_t nmemb, void* userp);
 
     CURL* _handle = nullptr;
+    Headers _headers;
 };
 
 Response request(const RequestOptions& options);

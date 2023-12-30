@@ -2,17 +2,50 @@
 
 #include <peepee/error.hpp>
 
+#include <format>
 #include <iostream>
 #include <sstream>
 
 namespace pp {
 
+namespace {
+
+std::string urlEncode(std::string_view string)
+{
+    char* s = curl_easy_escape(nullptr, string.data(), (int)string.length());
+    auto result = std::string{s};
+    curl_free(s);
+    return result;
+}
+
+std::string encodeUrl(
+    std::string_view url,
+    const std::vector<std::pair<std::string, std::string>>& params)
+{
+    auto s = std::ostringstream{};
+    s << url;
+    char separator = '?';
+    for (const auto& [key, value] : params) {
+        s << separator << urlEncode(key) << "=" << urlEncode(value);
+        separator = '&';
+    }
+
+    return s.str();
+}
+
+} // namespace
+
 Request::Request(const RequestOptions& options)
     : _handle(curl_easy_init())
+    , _headers(options.headers)
 {
-    check << curl_easy_setopt(_handle, CURLOPT_URL, options.url.c_str());
-    check << curl_easy_setopt(
+    auto url = encodeUrl(options.url, options.params);
+    std::cerr << "URL: " << url << "\n";
+    check() << curl_easy_setopt(_handle, CURLOPT_URL, url.c_str());
+    check() << curl_easy_setopt(
         _handle, CURLOPT_FOLLOWLOCATION, options.allowRedirects);
+    check() << curl_easy_setopt(
+        _handle, CURLOPT_HTTPHEADER, _headers._list.get());
 }
 
 Request::Request(const Request& other)
@@ -53,16 +86,16 @@ Request& Request::operator=(Request&& other) noexcept
 Response Request::send() const
 {
     auto errorBuffer = std::string(CURL_ERROR_SIZE, '\0');
-    check << curl_easy_setopt(_handle, CURLOPT_ERRORBUFFER, errorBuffer.data());
+    check() << curl_easy_setopt(_handle, CURLOPT_ERRORBUFFER, errorBuffer.data());
 
     auto responseData = std::ostringstream{};
-    check << curl_easy_setopt(_handle, CURLOPT_WRITEFUNCTION, writeData);
-    check << curl_easy_setopt(_handle, CURLOPT_WRITEDATA, &responseData);
+    check() << curl_easy_setopt(_handle, CURLOPT_WRITEFUNCTION, writeData);
+    check() << curl_easy_setopt(_handle, CURLOPT_WRITEDATA, &responseData);
 
-    check << curl_easy_perform(_handle);
+    check() << curl_easy_perform(_handle);
 
     long responseCode = 0;
-    check << curl_easy_getinfo(_handle, CURLINFO_RESPONSE_CODE, &responseCode);
+    check() << curl_easy_getinfo(_handle, CURLINFO_RESPONSE_CODE, &responseCode);
 
     return Response{
         .code = responseCode,

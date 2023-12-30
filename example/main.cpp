@@ -6,11 +6,15 @@ int main()
 {
     pp::initialize();
 
-    auto response = pp::request({
-        .url = "http://google.com",
+    auto r = pp::request({
+        .url = "https://httpbin.org/get",
+        .params = {
+            {"key1", "value1"},
+            {"key2", "value2"},
+        },
     });
 
-    std::cout << response.code << "\n" << response.data << "\n";
+    std::cout << r.code << "\n" << r.data << "\n";
 
     pp::cleanup();
 }

@@ -1,3 +1,5 @@
 add_subdirectory(curl)
 
-add_subdirectory(e)
+if(NOT TARGET e)
+    add_subdirectory(e)
+endif()

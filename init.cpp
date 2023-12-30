@@ -8,7 +8,7 @@ namespace pp {
 
 void initialize(const InitializeOptions& options)
 {
-    check << curl_global_init(
+    check() << curl_global_init(
         options.initializeWin32Sockets * CURL_GLOBAL_WIN32 |
         options.initializeSSL * CURL_GLOBAL_SSL);
 }

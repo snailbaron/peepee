@@ -4,19 +4,22 @@
 
 #include <curl/curl.h>
 
+#include <source_location>
+
 namespace pp {
 
-class Check {
+class Check final {
+public:
+    Check(std::source_location sourceLocation = std::source_location::current())
+        : _sourceLocation(sourceLocation)
+    { }
+
+    Check&& operator<<(CURLcode code) &&;
+
 private:
-    friend Check& operator<<(Check& check, CURLcode code)
-    {
-        if (code != CURLE_OK) {
-            throw e::Error{} << "curl error: " << code;
-        }
-        return check;
-    }
+    std::source_location _sourceLocation;
 };
 
-inline Check check;
+Check check(std::source_location sourceLocation = std::source_location::current());
 
 } // namespace pp
